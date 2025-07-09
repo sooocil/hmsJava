@@ -122,8 +122,13 @@ public class AddNewPatient extends JPanel implements ActionListener {
             Statement stmt = c.getConnection().createStatement();
             ResultSet rs = stmt.executeQuery("SELECT room_no FROM room WHERE availability = 'Available'");
             comboRoom.removeAllItems();
+            boolean hasRooms = false;
             while (rs.next()) {
                 comboRoom.addItem(rs.getString("room_no"));
+                hasRooms = true;
+            }
+            if (!hasRooms) {
+                comboRoom.addItem("No Room Available");
             }
             rs.close();
             stmt.close();
@@ -136,7 +141,7 @@ public class AddNewPatient extends JPanel implements ActionListener {
 
     private void updateRoomDetails() {
         String selectedRoom = (String) comboRoom.getSelectedItem();
-        if (selectedRoom == null) {
+        if (selectedRoom == null || selectedRoom.equals("No Room Available")) {
             roomPriceLabel.setText("");
             roomStatusLabel.setText("");
             return;
@@ -224,6 +229,7 @@ public class AddNewPatient extends JPanel implements ActionListener {
             try {
                 // Create connection
                 conn c = new conn();
+                Statement stmt = c.getConnection().createStatement();
 
                 // Get all field values
                 String name = textName.getText();
@@ -237,28 +243,55 @@ public class AddNewPatient extends JPanel implements ActionListener {
                 String deposit = textDeposit.getText();
                 String dateTime = labelDate.getText();
 
-                // Check if any field is empty
+                // Check if any required field is empty
                 if (name.equals("") || gender.equals("") || age.equals("") ||
-                        contact.equals("") || citizenNo.equals("") || roomNo.equals("") ||
+                        contact.equals("") || roomNo.equals("") || roomNo.equals("No Room Available") ||
                         address.equals("") || condition.equals("") || deposit.equals("")) {
-                    JOptionPane.showMessageDialog(null, "Please fill all fields!");
+                    JOptionPane.showMessageDialog(null, "Please fill all required fields!");
+                    stmt.close();
+                    c.getConnection().close();
                     return;
                 }
                 if (contact.length() < 10) {
                     JOptionPane.showMessageDialog(null, "Contact Number should be valid!");
+                    stmt.close();
+                    c.getConnection().close();
                     return;
                 }
 
-                // Create SQL query
+                // Check if room is available
+                ResultSet rs = stmt.executeQuery("SELECT availability FROM room WHERE room_no = '" + roomNo + "'");
+                if (rs.next()) {
+                    String availability = rs.getString("availability");
+                    if (!availability.equals("Available")) {
+                        JOptionPane.showMessageDialog(null, "Selected room is not available!");
+                        rs.close();
+                        stmt.close();
+                        c.getConnection().close();
+                        return;
+                    }
+                } else {
+                    JOptionPane.showMessageDialog(null, "Room not found!");
+                    rs.close();
+                    stmt.close();
+                    c.getConnection().close();
+                    return;
+                }
+                rs.close();
+
+                // Create SQL query for patient_info
                 String query = "INSERT INTO patient_info (name, gender, age, contact, citizen_no, room_no, address, disease_condition, deposit, time_date) VALUES ('" +
                         name + "', '" + gender + "', '" + age + "', '" +
                         contact + "', '" + citizenNo + "', '" + roomNo + "', '" +
                         address + "', '" + condition + "', '" + deposit + "', '" +
                         dateTime + "')";
 
-                // Execute query
-                Statement stmt = c.getConnection().createStatement();
+                // Execute patient insertion
                 stmt.executeUpdate(query);
+
+                // Update room availability to Occupied
+                String updateRoomQuery = "UPDATE room SET availability = 'Occupied' WHERE room_no = '" + roomNo + "'";
+                stmt.executeUpdate(updateRoomQuery);
 
                 JOptionPane.showMessageDialog(null, "Patient Added Successfully!");
 
@@ -281,7 +314,7 @@ public class AddNewPatient extends JPanel implements ActionListener {
                 // Update room combo
                 populateRoomCombo();
 
-                // Close statement
+                // Close statement and connection
                 stmt.close();
                 c.getConnection().close();
 

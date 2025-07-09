@@ -8,7 +8,6 @@ import java.awt.event.*;
 public class ReceptionPanel extends JFrame {
 
     JButton logoutButton;
-    CardLayout cardLayout;
     JPanel mainPanel;
 
     public ReceptionPanel() {
@@ -27,8 +26,8 @@ public class ReceptionPanel extends JFrame {
         sidebarTitle.setForeground(Color.WHITE);
         sidebarTitle.setFont(new Font("Segoe UI", Font.BOLD, 20));
         sidebarTitle.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createMatteBorder(0, 0, 2, 0, new Color(34, 34, 34)), // bottom line
-                BorderFactory.createEmptyBorder(0, 0, 8, 0)                         // normal padding
+                BorderFactory.createMatteBorder(0, 0, 2, 0, new Color(34, 34, 34)),
+                BorderFactory.createEmptyBorder(0, 0, 8, 0)
         ));
 
         leftPanel.add(sidebarTitle);
@@ -47,8 +46,7 @@ public class ReceptionPanel extends JFrame {
                 "Ambulance Info"
         };
 
-        cardLayout = new CardLayout();
-        mainPanel = new JPanel(cardLayout);
+        mainPanel = new JPanel(new BorderLayout());
         mainPanel.setBackground(new Color(247, 247, 250));
 
         for (String name : buttonNames) {
@@ -82,7 +80,7 @@ public class ReceptionPanel extends JFrame {
                 }
             });
 
-            // Action to switch tab
+            // Action to switch page
             button.addActionListener(e -> {
                 for (Component comp : leftPanel.getComponents()) {
                     if (comp instanceof JButton) {
@@ -95,48 +93,47 @@ public class ReceptionPanel extends JFrame {
                 button.setSelected(true);
                 button.setBackground(new Color(147, 197, 253));
                 button.setForeground(Color.WHITE);
-                cardLayout.show(mainPanel, name);
+
+                // Clear mainPanel and add new panel
+                mainPanel.removeAll();
+                JPanel newPanel;
+                switch (name) {
+                    case "Dashboard":
+                        newPanel = new DashboardPanel();
+                        break;
+                    case "Add New Patient":
+                        newPanel = new AddNewPatient();
+                        break;
+                    case "All Patient Info":
+                        newPanel = new AllPatientInfo();
+                        break;
+
+                    case "View Room":
+                        newPanel = createPlaceholderPanel("Room Status Placeholder");
+                        break;
+                    case "Add Room":
+                        newPanel = new AddRoomPanel();
+                        break;
+                    case "Department":
+                        newPanel = new DepartmentPanel();
+                        break;
+                    case "Employee Info":
+                        newPanel = createPlaceholderPanel("Employee Table Placeholder");
+                        break;
+
+                    case "Ambulance Info":
+                        newPanel = createPlaceholderPanel("Ambulance Status Placeholder");
+                        break;
+                    default:
+                        newPanel = createPlaceholderPanel("Welcome to " + name);
+                }
+                mainPanel.add(newPanel, BorderLayout.CENTER);
+                mainPanel.revalidate();
+                mainPanel.repaint();
             });
 
             leftPanel.add(button);
             leftPanel.add(Box.createRigidArea(new Dimension(0, 5)));
-
-            JPanel tabPanel;
-            switch (name) {
-                case "Dashboard":
-                    tabPanel = new DashboardPanel();
-                    break;
-                case "Add New Patient":
-                    tabPanel = new AddNewPatient();
-                    break;
-                case "All Patient Info":
-                    tabPanel = createPlaceholderPanel("Patient Table Placeholder");
-                    break;
-                case "Discharge Patient":
-                    tabPanel = new DischargePatientPanel();
-                    break;
-                case "View Room":
-                    tabPanel = createPlaceholderPanel("Room Status Placeholder");
-                    break;
-                case "Add Room":
-                    tabPanel = new AddRoomPanel();
-                    break;
-                case "Department":
-                    tabPanel = new DepartmentPanel();
-                    break;
-                case "Employee Info":
-                    tabPanel = createPlaceholderPanel("Employee Table Placeholder");
-                    break;
-                case "Update Patient Details":
-                    tabPanel = new UpdatePatientDetails();
-                    break;
-                case "Ambulance Info":
-                    tabPanel = createPlaceholderPanel("Ambulance Status Placeholder");
-                    break;
-                default:
-                    tabPanel = createPlaceholderPanel("Welcome to " + name);
-            }
-            mainPanel.add(tabPanel, name);
         }
 
         leftPanel.add(Box.createVerticalGlue());
@@ -174,6 +171,11 @@ public class ReceptionPanel extends JFrame {
         add(leftPanel, BorderLayout.WEST);
         add(mainPanel, BorderLayout.CENTER);
 
+        // Show Dashboard by default
+        mainPanel.add(new DashboardPanel(), BorderLayout.CENTER);
+        mainPanel.revalidate();
+        mainPanel.repaint();
+
         setTitle("Hospital Management System - Reception Panel");
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         setResizable(true);
@@ -200,15 +202,6 @@ public class ReceptionPanel extends JFrame {
     }
 
     public static void main(String[] args) {
-         new ReceptionPanel();
+        new ReceptionPanel();
     }
 }
-
-
-
-
-
-
-
-
-
