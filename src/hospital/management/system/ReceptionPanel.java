@@ -12,12 +12,10 @@ public class ReceptionPanel extends JFrame {
     JPanel mainPanel;
 
     public ReceptionPanel() {
-        // Use BorderLayout for frame
         setLayout(new BorderLayout());
 
-        // Sidebar panel with shadow
         JPanel leftPanel = new JPanel();
-        leftPanel.setPreferredSize(new Dimension(420, 0));
+        leftPanel.setPreferredSize(new Dimension(420, 200));
         leftPanel.setBackground(new Color(23, 37, 84));
         leftPanel.setLayout(new BoxLayout(leftPanel, BoxLayout.Y_AXIS));
         leftPanel.setBorder(new CompoundBorder(
@@ -25,7 +23,6 @@ public class ReceptionPanel extends JFrame {
                 BorderFactory.createEmptyBorder(25, 15, 20, 0)
         ));
 
-        // Sidebar title (bottom‑only underline)
         JLabel sidebarTitle = new JLabel("HMS – Hospital Management System");
         sidebarTitle.setForeground(Color.WHITE);
         sidebarTitle.setFont(new Font("Segoe UI", Font.BOLD, 20));
@@ -50,12 +47,10 @@ public class ReceptionPanel extends JFrame {
                 "Ambulance Info"
         };
 
-        // Main panel with CardLayout
         cardLayout = new CardLayout();
         mainPanel = new JPanel(cardLayout);
         mainPanel.setBackground(new Color(247, 247, 250));
 
-        // Create buttons and corresponding tab panels
         for (String name : buttonNames) {
             // Create button
             JButton button = new JButton(name);
@@ -89,7 +84,6 @@ public class ReceptionPanel extends JFrame {
 
             // Action to switch tab
             button.addActionListener(e -> {
-                // Reset all buttons' appearance
                 for (Component comp : leftPanel.getComponents()) {
                     if (comp instanceof JButton) {
                         JButton btn = (JButton) comp;
@@ -98,7 +92,6 @@ public class ReceptionPanel extends JFrame {
                         btn.setForeground(new Color(209, 213, 219));
                     }
                 }
-                // Highlight selected button
                 button.setSelected(true);
                 button.setBackground(new Color(147, 197, 253));
                 button.setForeground(Color.WHITE);
@@ -108,7 +101,6 @@ public class ReceptionPanel extends JFrame {
             leftPanel.add(button);
             leftPanel.add(Box.createRigidArea(new Dimension(0, 5)));
 
-            // Create tab panel based on name
             JPanel tabPanel;
             switch (name) {
                 case "Dashboard":
@@ -136,7 +128,7 @@ public class ReceptionPanel extends JFrame {
                     tabPanel = createPlaceholderPanel("Employee Table Placeholder");
                     break;
                 case "Update Patient Details":
-                    tabPanel = new UpdatePatientDetailsPanel();
+                    tabPanel = new UpdatePatientDetails();
                     break;
                 case "Ambulance Info":
                     tabPanel = createPlaceholderPanel("Ambulance Status Placeholder");
@@ -147,10 +139,8 @@ public class ReceptionPanel extends JFrame {
             mainPanel.add(tabPanel, name);
         }
 
-        // Add vertical glue for logout button
         leftPanel.add(Box.createVerticalGlue());
 
-        // Logout button
         logoutButton = new JButton("Logout");
         logoutButton.setMaximumSize(new Dimension(400, 42));
         logoutButton.setBackground(new Color(59, 130, 246));
@@ -181,11 +171,9 @@ public class ReceptionPanel extends JFrame {
         leftPanel.add(logoutButton);
         leftPanel.add(Box.createRigidArea(new Dimension(0, 15)));
 
-        // Add panels to frame
         add(leftPanel, BorderLayout.WEST);
         add(mainPanel, BorderLayout.CENTER);
 
-        // Frame setup
         setTitle("Hospital Management System - Reception Panel");
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         setResizable(true);
@@ -193,7 +181,6 @@ public class ReceptionPanel extends JFrame {
         setVisible(true);
     }
 
-    // Placeholder panel for tabs not yet implemented
     private JPanel createPlaceholderPanel(String text) {
         JPanel tabPanel = new JPanel(new BorderLayout());
         tabPanel.setBackground(new Color(247, 247, 250));
@@ -217,7 +204,6 @@ public class ReceptionPanel extends JFrame {
     }
 }
 
-// Example tab panel classes
 
 
 

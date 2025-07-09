@@ -4,87 +4,185 @@ import javax.swing.*;
 import javax.swing.border.CompoundBorder;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.sql.ResultSet;
+import java.awt.event.ActionListener;
+import java.sql.*;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
-/**
- * Beginner‑friendly form to add a new patient.
- * Shows current date‑time and lets the user refresh it with a button.
- */
-public class AddNewPatient extends JPanel {
-    // ─── Global form components ──────────────────────────────────────────────
+public class AddNewPatient extends JPanel implements ActionListener {
     JComboBox<String> comboGender;
-    JComboBox<Number> comboRoom;
-
-
-    JTextField textName, textAge, textContact, textCitizen, textRoom, textAddress, textCondition;
-    JLabel   labelDate;
-    JButton  buttonSubmit, buttonRefreshDate;
+    JComboBox<String> comboRoom;
+    JTextField textName, textAge, textContact, textCitizen, textAddress, textCondition, textDeposit;
+    JLabel labelDate, PatientRandomID, roomPriceLabel, roomStatusLabel;
+    Number PatientID;
+    JButton buttonSubmit, buttonRefreshDate;
 
     private static final DateTimeFormatter DT_FMT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     public AddNewPatient() {
-        /* ── panel look ── */
+        /* Panel look */
         setBackground(new Color(247, 247, 250));
-        setLayout(new BorderLayout());
+        setLayout(null);
 
-        JPanel card = new JPanel(new GridBagLayout());
+        JPanel card = new JPanel(null);
         card.setBackground(Color.WHITE);
+        card.setBounds(50, 50, 600, 600);
         card.setBorder(new CompoundBorder(
                 BorderFactory.createLineBorder(new Color(229, 231, 235), 1),
                 BorderFactory.createEmptyBorder(20, 20, 20, 20)));
 
-        GridBagConstraints g = new GridBagConstraints();
-        g.insets = new Insets(10, 10, 10, 10);
-        g.anchor = GridBagConstraints.WEST;
-
-        /* ── helper to add a label‑field row ── */
-        int row = 0;
-        g.gridx = 0; g.gridy = row; g.gridwidth = 2;
         JLabel title = new JLabel("Add New Patient");
         title.setFont(new Font("Segoe UI", Font.BOLD, 24));
         title.setForeground(new Color(17, 24, 39));
-        card.add(title, g);
+        title.setBounds(20, 10, 300, 30);
+        card.add(title);
 
-        row++;
-        addRow(card, g, row++, "Full Name:", textName   = new JTextField(20));
-        addRow(card, g, row++, "Gender:",    comboGender = new JComboBox<>(new String[]{"Male","Female","Other"}));
-        addRow(card, g, row++, "Age:",       textAge    = new JTextField(5));
-        addRow(card, g, row++, "Contact:",   textContact = new JTextField(15));
-        addRow(card, g, row++, "Citizenship No.:", textCitizen = new JTextField(15));
-        addRow(card, g, row++, "Room No. :",    comboRoom = new JComboBox<>(new Number[]{100,203,200,205,300,120}));
-        addRow(card, g, row++, "Address:",   textAddress = new JTextField(20));
-        addRow(card, g, row++, "Disease/Condition:", textCondition = new JTextField(20));
+        PatientID = getNextPatientID();
+        PatientRandomID = new JLabel("Patient ID : " + PatientID);
+        PatientRandomID.setFont(new Font("Segoe UI", Font.BOLD, 15));
+        PatientRandomID.setBackground(new Color(120, 120, 120));
+        PatientRandomID.setForeground(new Color(120, 120, 120));
+        PatientRandomID.setBounds(335, 10, 300, 30);
+        card.add(PatientRandomID);
 
-        g.gridy = row; g.gridx = 0; g.gridwidth = 1;
-        card.add(new JLabel("Date & Time:"), g);
+        int y = 60;
+        textName = addLabelAndField(card, "Full Name:", y); y += 40;
+        comboGender = new JComboBox<>(new String[]{"Male", "Female", "Other"});
+        addLabelAndComponent(card, "Gender:", comboGender, y); y += 40;
+        textAge = addLabelAndField(card, "Age:", y); y += 40;
+        textContact = addLabelAndField(card, "Contact:", y); y += 40;
+        textCitizen = addLabelAndField(card, "Citizenship No.:", y); y += 40;
+
+        // Room selection with dynamic data
+        JLabel roomLabel = new JLabel("Room No.:");
+        roomLabel.setBounds(20, y, 120, 25);
+        card.add(roomLabel);
+
+        comboRoom = new JComboBox<>();
+        comboRoom.setBounds(150, y, 180, 25);
+        card.add(comboRoom);
+
+        // Availability status label
+        roomStatusLabel = new JLabel("");
+        roomStatusLabel.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        roomStatusLabel.setBounds(340, y, 90, 25);
+        card.add(roomStatusLabel);
+
+        // Price label
+        JLabel priceLabel = new JLabel("Price:");
+        priceLabel.setBounds(20, y + 30, 120, 25);
+        card.add(priceLabel);
+
+        roomPriceLabel = new JLabel("");
+        roomPriceLabel.setFont(new Font("Segoe UI", Font.PLAIN, 16));
+        roomPriceLabel.setBounds(150, y + 30, 280, 25);
+        card.add(roomPriceLabel);
+
+        // Populate rooms and set initial price/status
+        populateRoomCombo();
+        comboRoom.addActionListener(e -> updateRoomDetails());
+
+        y += 70;
+        textAddress = addLabelAndField(card, "Address:", y); y += 40;
+        textCondition = addLabelAndField(card, "Disease/Condition:", y); y += 40;
+        textDeposit = addLabelAndField(card, "Deposit:", y); y += 45;
+
+        JLabel lblDate = new JLabel("Date & Time:");
+        lblDate.setBounds(20, y, 120, 25);
+        card.add(lblDate);
 
         labelDate = new JLabel(now());
         labelDate.setFont(new Font("Segoe UI", Font.PLAIN, 16));
-        g.gridx = 1;
-        card.add(labelDate, g);
+        labelDate.setBounds(150, y, 180, 25);
+        card.add(labelDate);
 
         buttonRefreshDate = new JButton("Refresh");
         buttonRefreshDate.setFocusPainted(false);
+        buttonRefreshDate.setBounds(340, y, 90, 25);
         buttonRefreshDate.addActionListener(e -> labelDate.setText(now()));
-        g.gridx = 2;
-        card.add(buttonRefreshDate, g);
+        card.add(buttonRefreshDate);
 
-        /* ── submit button spanning the full width ── */
-        buttonSubmit = new JButton("Submit");
+        y += 40;
+        buttonSubmit = new JButton("Add");
         buttonSubmit.setBackground(new Color(59, 130, 246));
         buttonSubmit.setForeground(Color.WHITE);
         buttonSubmit.setFont(new Font("Segoe UI", Font.BOLD, 14));
         buttonSubmit.setFocusPainted(false);
-        g.gridy = ++row; g.gridx = 0; g.gridwidth = 3; g.anchor = GridBagConstraints.CENTER;
-        card.add(buttonSubmit, g);
+        buttonSubmit.setBounds(200, y, 120, 35);
+        buttonSubmit.addActionListener(e -> labelDate.setText(now()));
+        buttonSubmit.addActionListener(this);
+        card.add(buttonSubmit);
 
-        add(card, BorderLayout.CENTER);
-        setBorder(BorderFactory.createEmptyBorder(50, 50, 50, 50));
+        add(card);
     }
 
-    /** Returns formatted current date‑time. */
+    private void populateRoomCombo() {
+        try {
+            conn c = new conn();
+            Statement stmt = c.getConnection().createStatement();
+            ResultSet rs = stmt.executeQuery("SELECT room_no FROM room WHERE availability = 'Available'");
+            comboRoom.removeAllItems();
+            while (rs.next()) {
+                comboRoom.addItem(rs.getString("room_no"));
+            }
+            rs.close();
+            stmt.close();
+            c.getConnection().close();
+            updateRoomDetails(); // Set initial price and status
+        } catch (Exception e) {
+            System.out.println("Error: " + e);
+        }
+    }
+
+    private void updateRoomDetails() {
+        String selectedRoom = (String) comboRoom.getSelectedItem();
+        if (selectedRoom == null) {
+            roomPriceLabel.setText("");
+            roomStatusLabel.setText("");
+            return;
+        }
+        try {
+            conn c = new conn();
+            Statement stmt = c.getConnection().createStatement();
+            ResultSet rs = stmt.executeQuery("SELECT price, availability FROM room WHERE room_no = '" + selectedRoom + "'");
+            if (rs.next()) {
+                roomPriceLabel.setText(rs.getString("price"));
+                String availability = rs.getString("availability");
+                roomStatusLabel.setText(availability);
+                if (availability.equals("Available")) {
+                    roomStatusLabel.setForeground(new Color(0, 128, 0)); // Green
+                } else {
+                    roomStatusLabel.setForeground(Color.RED);
+                }
+            } else {
+                roomPriceLabel.setText("");
+                roomStatusLabel.setText("");
+            }
+            rs.close();
+            stmt.close();
+            c.getConnection().close();
+        } catch (Exception e) {
+            System.out.println("Error: " + e);
+        }
+    }
+
+    private Number getNextPatientID() {
+        try {
+            conn c = new conn();
+            Statement stmt = c.getConnection().createStatement();
+            ResultSet rs = stmt.executeQuery("SELECT COUNT(*) FROM patient_info");
+            rs.next();
+            int count = rs.getInt(1);
+            rs.close();
+            stmt.close();
+            c.getConnection().close();
+            return count + 1;
+        } catch (Exception e) {
+            System.out.println("Error: " + e);
+            return 1;
+        }
+    }
+
     private String now() {
         return LocalDateTime.now().format(DT_FMT);
     }
@@ -93,22 +191,104 @@ public class AddNewPatient extends JPanel {
         if (e.getSource() == buttonSubmit) {
             try {
                 labelDate.setText(now());
-                System.out.println("Now date : " + labelDate);
-            } catch (Exception E) {
-                E.printStackTrace();
+                System.out.println("Now date: " + labelDate.getText());
+            } catch (Exception ex) {
+                System.out.println("Error: " + ex);
             }
-        } else {
-            int code = 20;
-            System.out.println("Program exited with code: " + code);
-            System.exit(code);
         }
     }
 
-    /** Utility to add a labelled field to the grid. */
-    private void addRow(JPanel panel, GridBagConstraints g, int row, String labelText, JComponent field) {
-        g.gridy = row; g.gridx = 0; g.gridwidth = 1;
-        panel.add(new JLabel(labelText), g);
-        g.gridx = 1; g.gridwidth = 2;
-        panel.add(field, g);
+    private JTextField addLabelAndField(JPanel panel, String labelText, int y) {
+        JLabel label = new JLabel(labelText);
+        label.setBounds(20, y, 120, 25);
+        panel.add(label);
+
+        JTextField textField = new JTextField();
+        textField.setBounds(150, y, 280, 25);
+        panel.add(textField);
+        return textField;
+    }
+
+    private void addLabelAndComponent(JPanel panel, String labelText, JComponent component, int y) {
+        JLabel label = new JLabel(labelText);
+        label.setBounds(20, y, 120, 25);
+        panel.add(label);
+
+        component.setBounds(150, y, 280, 25);
+        panel.add(component);
+    }
+
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        if (e.getSource() == buttonSubmit) {
+            try {
+                // Create connection
+                conn c = new conn();
+
+                // Get all field values
+                String name = textName.getText();
+                String gender = comboGender.getSelectedItem().toString();
+                String age = textAge.getText();
+                String contact = textContact.getText();
+                String citizenNo = textCitizen.getText();
+                String roomNo = comboRoom.getSelectedItem().toString();
+                String address = textAddress.getText();
+                String condition = textCondition.getText();
+                String deposit = textDeposit.getText();
+                String dateTime = labelDate.getText();
+
+                // Check if any field is empty
+                if (name.equals("") || gender.equals("") || age.equals("") ||
+                        contact.equals("") || citizenNo.equals("") || roomNo.equals("") ||
+                        address.equals("") || condition.equals("") || deposit.equals("")) {
+                    JOptionPane.showMessageDialog(null, "Please fill all fields!");
+                    return;
+                }
+                if (contact.length() < 10) {
+                    JOptionPane.showMessageDialog(null, "Contact Number should be valid!");
+                    return;
+                }
+
+                // Create SQL query
+                String query = "INSERT INTO patient_info (name, gender, age, contact, citizen_no, room_no, address, disease_condition, deposit, time_date) VALUES ('" +
+                        name + "', '" + gender + "', '" + age + "', '" +
+                        contact + "', '" + citizenNo + "', '" + roomNo + "', '" +
+                        address + "', '" + condition + "', '" + deposit + "', '" +
+                        dateTime + "')";
+
+                // Execute query
+                Statement stmt = c.getConnection().createStatement();
+                stmt.executeUpdate(query);
+
+                JOptionPane.showMessageDialog(null, "Patient Added Successfully!");
+
+                // Clear all fields
+                textName.setText("");
+                comboGender.setSelectedIndex(0);
+                textAge.setText("");
+                textContact.setText("");
+                textCitizen.setText("");
+                comboRoom.setSelectedIndex(0);
+                textAddress.setText("");
+                textCondition.setText("");
+                textDeposit.setText("");
+                labelDate.setText(now());
+
+                // Update patient ID
+                PatientID = getNextPatientID();
+                PatientRandomID.setText("Patient ID : " + PatientID);
+
+                // Update room combo
+                populateRoomCombo();
+
+                // Close statement
+                stmt.close();
+                c.getConnection().close();
+
+            } catch (Exception ex) {
+                ex.printStackTrace();
+                JOptionPane.showMessageDialog(null, "Error: " + ex.getMessage());
+            }
+        }
     }
 }
