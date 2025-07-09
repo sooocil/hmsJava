@@ -5,7 +5,7 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
 
-public class conn {
+public class conn implements AutoCloseable {
 
     Connection connection;
     Statement statement;
@@ -28,4 +28,8 @@ public class conn {
     }
 
 
+    @Override
+    public void close() throws Exception {
+
+    }
 }

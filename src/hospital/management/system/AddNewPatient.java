@@ -3,325 +3,166 @@ package hospital.management.system;
 import javax.swing.*;
 import javax.swing.border.CompoundBorder;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.sql.*;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Vector;
 
-public class AddNewPatient extends JPanel implements ActionListener {
-    JComboBox<String> comboGender;
-    JComboBox<String> comboRoom;
-    JTextField textName, textAge, textContact, textCitizen, textAddress, textCondition, textDeposit;
-    JLabel labelDate, PatientRandomID, roomPriceLabel, roomStatusLabel;
-    Number PatientID;
-    JButton buttonSubmit, buttonRefreshDate;
+public class AddNewPatient extends JPanel {
+    private JTextField tName,tAge,tContact,tCitizen,tAddress,tCondition,tDeposit;
+    private JComboBox<String> cGender,cRoom;
+    private JLabel priceLbl,statusLbl,dateLbl,idLbl;
+    private JButton btnAdd,btnRefresh;
+    private static final DateTimeFormatter FMT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
-    private static final DateTimeFormatter DT_FMT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-
-    public AddNewPatient() {
-        /* Panel look */
-        setBackground(new Color(247, 247, 250));
+    public AddNewPatient(){
+        setPreferredSize(new Dimension(600,600));
         setLayout(null);
+        setBackground(new Color(247,247,250));
 
-        JPanel card = new JPanel(null);
+        JPanel card=new JPanel(null);
+        card.setBounds(0,0,600,600);
         card.setBackground(Color.WHITE);
-        card.setBounds(50, 50, 600, 600);
         card.setBorder(new CompoundBorder(
-                BorderFactory.createLineBorder(new Color(229, 231, 235), 1),
-                BorderFactory.createEmptyBorder(20, 20, 20, 20)));
+                BorderFactory.createLineBorder(new Color(229,231,235),1),
+                BorderFactory.createEmptyBorder(40,40,40,40)));
+        add(card);
 
-        JLabel title = new JLabel("Add New Patient");
-        title.setFont(new Font("Segoe UI", Font.BOLD, 24));
-        title.setForeground(new Color(17, 24, 39));
-        title.setBounds(20, 10, 300, 30);
+        JLabel title=new JLabel("Add New Patient");
+        title.setFont(new Font("Segoe UI",Font.BOLD,24));
+        title.setBounds(20,10,300,30);
         card.add(title);
 
-        PatientID = getNextPatientID();
-        PatientRandomID = new JLabel("Patient ID : " + PatientID);
-        PatientRandomID.setFont(new Font("Segoe UI", Font.BOLD, 15));
-        PatientRandomID.setBackground(new Color(120, 120, 120));
-        PatientRandomID.setForeground(new Color(120, 120, 120));
-        PatientRandomID.setBounds(335, 10, 300, 30);
-        card.add(PatientRandomID);
+        idLbl=new JLabel("Patient ID : "+nextId());
+        idLbl.setBounds(330,10,200,30);
+        idLbl.setFont(new Font("Segoe UI",Font.BOLD,15));
+        idLbl.setForeground(new Color(120,120,120));
+        card.add(idLbl);
 
-        int y = 60;
-        textName = addLabelAndField(card, "Full Name:", y); y += 40;
-        comboGender = new JComboBox<>(new String[]{"Male", "Female", "Other"});
-        addLabelAndComponent(card, "Gender:", comboGender, y); y += 40;
-        textAge = addLabelAndField(card, "Age:", y); y += 40;
-        textContact = addLabelAndField(card, "Contact:", y); y += 40;
-        textCitizen = addLabelAndField(card, "Citizenship No.:", y); y += 40;
+        int y=60;
+        tName       =field(card,"Full Name:",y);           y+=40;
+        cGender     =combo(card,"Gender:",new String[]{"Male","Female","Other"},y); y+=40;
+        tAge        =field(card,"Age:",y);                 y+=40;
+        tContact    =field(card,"Contact:",y);             y+=40;
+        tCitizen    =field(card,"Citizenship No.:",y);     y+=40;
 
-        // Room selection with dynamic data
-        JLabel roomLabel = new JLabel("Room No.:");
-        roomLabel.setBounds(20, y, 120, 25);
-        card.add(roomLabel);
+        JLabel rlbl=new JLabel("Room No.:"); rlbl.setBounds(20,y,120,25); card.add(rlbl);
+        cRoom=new JComboBox<>(); cRoom.setBounds(150,y,180,25); card.add(cRoom);
 
-        comboRoom = new JComboBox<>();
-        comboRoom.setBounds(150, y, 180, 25);
-        card.add(comboRoom);
+        statusLbl=new JLabel(); statusLbl.setBounds(340,y,100,25); card.add(statusLbl);
+        JLabel plbl=new JLabel("Price:"); plbl.setBounds(20,y+30,120,25); card.add(plbl);
+        priceLbl=new JLabel(); priceLbl.setBounds(150,y+30,180,25); card.add(priceLbl);
 
-        // Availability status label
-        roomStatusLabel = new JLabel("");
-        roomStatusLabel.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-        roomStatusLabel.setBounds(340, y, 90, 25);
-        card.add(roomStatusLabel);
+        loadRooms();
+        cRoom.addActionListener(e->roomDetails());
 
-        // Price label
-        JLabel priceLabel = new JLabel("Price:");
-        priceLabel.setBounds(20, y + 30, 120, 25);
-        card.add(priceLabel);
+        y+=70;
+        tAddress    =field(card,"Address:",y);             y+=40;
+        tCondition  =field(card,"Disease/Condition:",y);   y+=40;
+        tDeposit    =field(card,"Deposit:",y);             y+=45;
 
-        roomPriceLabel = new JLabel("");
-        roomPriceLabel.setFont(new Font("Segoe UI", Font.PLAIN, 16));
-        roomPriceLabel.setBounds(150, y + 30, 280, 25);
-        card.add(roomPriceLabel);
+        JLabel dlbl=new JLabel("Date & Time:"); dlbl.setBounds(20,y,120,25); card.add(dlbl);
+        dateLbl=new JLabel(now()); dateLbl.setBounds(150,y,180,25); card.add(dateLbl);
+        btnRefresh=new JButton("Refresh"); btnRefresh.setBounds(340,y,90,25);
+        btnRefresh.addActionListener(e->dateLbl.setText(now())); card.add(btnRefresh);
 
-        // Populate rooms and set initial price/status
-        populateRoomCombo();
-        comboRoom.addActionListener(e -> updateRoomDetails());
-
-        y += 70;
-        textAddress = addLabelAndField(card, "Address:", y); y += 40;
-        textCondition = addLabelAndField(card, "Disease/Condition:", y); y += 40;
-        textDeposit = addLabelAndField(card, "Deposit:", y); y += 45;
-
-        JLabel lblDate = new JLabel("Date & Time:");
-        lblDate.setBounds(20, y, 120, 25);
-        card.add(lblDate);
-
-        labelDate = new JLabel(now());
-        labelDate.setFont(new Font("Segoe UI", Font.PLAIN, 16));
-        labelDate.setBounds(150, y, 180, 25);
-        card.add(labelDate);
-
-        buttonRefreshDate = new JButton("Refresh");
-        buttonRefreshDate.setFocusPainted(false);
-        buttonRefreshDate.setBounds(340, y, 90, 25);
-        buttonRefreshDate.addActionListener(e -> labelDate.setText(now()));
-        card.add(buttonRefreshDate);
-
-        y += 40;
-        buttonSubmit = new JButton("Add");
-        buttonSubmit.setBackground(new Color(59, 130, 246));
-        buttonSubmit.setForeground(Color.WHITE);
-        buttonSubmit.setFont(new Font("Segoe UI", Font.BOLD, 14));
-        buttonSubmit.setFocusPainted(false);
-        buttonSubmit.setBounds(200, y, 120, 35);
-        buttonSubmit.addActionListener(e -> labelDate.setText(now()));
-        buttonSubmit.addActionListener(this);
-        card.add(buttonSubmit);
-
-        add(card);
+        y+=40;
+        btnAdd=new JButton("Add"); btnAdd.setBounds(200,y,120,35);
+        btnAdd.setBackground(new Color(59,130,246)); btnAdd.setForeground(Color.WHITE);
+        btnAdd.addActionListener(e->savePatient()); card.add(btnAdd);
     }
 
-    private void populateRoomCombo() {
-        try {
-            conn c = new conn();
-            Statement stmt = c.getConnection().createStatement();
-            ResultSet rs = stmt.executeQuery("SELECT room_no FROM room WHERE availability = 'Available'");
-            comboRoom.removeAllItems();
-            boolean hasRooms = false;
-            while (rs.next()) {
-                comboRoom.addItem(rs.getString("room_no"));
-                hasRooms = true;
+    private JTextField field(JPanel p,String txt,int y){
+        JLabel l=new JLabel(txt); l.setBounds(20,y,120,25); p.add(l);
+        JTextField f=new JTextField(); f.setBounds(150,y,280,25); p.add(f); return f;
+    }
+    private JComboBox<String> combo(JPanel p,String txt,String[] items,int y){
+        JLabel l=new JLabel(txt); l.setBounds(20,y,120,25); p.add(l);
+        JComboBox<String> cb=new JComboBox<>(items); cb.setBounds(150,y,180,25); p.add(cb); return cb;
+    }
+
+    private void loadRooms(){
+        try{
+            conn c=new conn();
+            Statement st=c.getConnection().createStatement();
+            ResultSet rs=st.executeQuery("SELECT room_no FROM room WHERE availability=true");
+            cRoom.removeAllItems();
+            Vector<String> list=new Vector<>();
+            while(rs.next()) list.add(rs.getString(1));
+            if(list.isEmpty()) cRoom.addItem("No Room");
+            else for(String r:list) cRoom.addItem(r);
+            rs.close(); st.close(); c.getConnection().close();
+            roomDetails();
+        }catch(Exception ex){System.out.println(ex);}
+    }
+    private void roomDetails(){
+        String room=(String)cRoom.getSelectedItem();
+        if(room==null||room.equals("No Room")){priceLbl.setText("");statusLbl.setText("");return;}
+        try{
+            conn c=new conn();
+            Statement st=c.getConnection().createStatement();
+            ResultSet rs=st.executeQuery("SELECT price,availability FROM room WHERE room_no='"+room+"'");
+            if(rs.next()){
+                priceLbl.setText(rs.getString("price"));
+                boolean avail=rs.getBoolean("availability");
+                statusLbl.setText(avail?"Available":"Occupied");
+                statusLbl.setForeground(avail?new Color(0,128,0):Color.RED);
             }
-            if (!hasRooms) {
-                comboRoom.addItem("No Room Available");
-            }
-            rs.close();
-            stmt.close();
-            c.getConnection().close();
-            updateRoomDetails(); // Set initial price and status
-        } catch (Exception e) {
-            System.out.println("Error: " + e);
+            rs.close(); st.close(); c.getConnection().close();
+        }catch(Exception ex){System.out.println(ex);}
+    }
+
+    private int nextId(){
+        try{
+            conn c=new conn();
+            Statement st=c.getConnection().createStatement();
+            ResultSet rs=st.executeQuery("SELECT COUNT(*) FROM patient_info");
+            rs.next(); int id=rs.getInt(1)+1;
+            rs.close(); st.close(); c.getConnection().close(); return id;
+        }catch(Exception ex){return 1;}
+    }
+
+    private String now(){ return LocalDateTime.now().format(FMT); }
+
+    private void savePatient(){
+        String room=(String)cRoom.getSelectedItem();
+        if(room==null||room.equals("No Room")){
+            JOptionPane.showMessageDialog(this,"No available room."); return;
         }
+        try{
+            conn c=new conn();
+            Connection con=c.getConnection();
+            con.setAutoCommit(false);
+
+            PreparedStatement chk=con.prepareStatement("SELECT availability FROM room WHERE room_no=?");
+            chk.setString(1,room); ResultSet rs=chk.executeQuery();
+            if(!rs.next()||!rs.getBoolean(1)){JOptionPane.showMessageDialog(this,"Room now occupied.");con.rollback();return;}
+
+            PreparedStatement ins=con.prepareStatement(
+                    "INSERT INTO patient_info(name,gender,age,contact,citizen_no,room_no,address,disease_condition,deposit,time_date) VALUES(?,?,?,?,?,?,?,?,?,?)");
+            ins.setString(1,tName.getText());
+            ins.setString(2,(String)cGender.getSelectedItem());
+            ins.setString(3,tAge.getText());
+            ins.setString(4,tContact.getText());
+            ins.setString(5,tCitizen.getText());
+            ins.setString(6,room);
+            ins.setString(7,tAddress.getText());
+            ins.setString(8,tCondition.getText());
+            ins.setString(9,tDeposit.getText());
+            ins.setString(10,now());
+            ins.executeUpdate();
+
+            PreparedStatement upd=con.prepareStatement("UPDATE room SET availability=false WHERE room_no=?");
+            upd.setString(1,room); upd.executeUpdate();
+
+            con.commit();
+            JOptionPane.showMessageDialog(this,"Patient added.");
+            clear(); loadRooms(); idLbl.setText("Patient ID : "+nextId());
+        }catch(Exception ex){ex.printStackTrace();}
     }
-
-    private void updateRoomDetails() {
-        String selectedRoom = (String) comboRoom.getSelectedItem();
-        if (selectedRoom == null || selectedRoom.equals("No Room Available")) {
-            roomPriceLabel.setText("");
-            roomStatusLabel.setText("");
-            return;
-        }
-        try {
-            conn c = new conn();
-            Statement stmt = c.getConnection().createStatement();
-            ResultSet rs = stmt.executeQuery("SELECT price, availability FROM room WHERE room_no = '" + selectedRoom + "'");
-            if (rs.next()) {
-                roomPriceLabel.setText(rs.getString("price"));
-                String availability = rs.getString("availability");
-                roomStatusLabel.setText(availability);
-                if (availability.equals("Available")) {
-                    roomStatusLabel.setForeground(new Color(0, 128, 0)); // Green
-                } else {
-                    roomStatusLabel.setForeground(Color.RED);
-                }
-            } else {
-                roomPriceLabel.setText("");
-                roomStatusLabel.setText("");
-            }
-            rs.close();
-            stmt.close();
-            c.getConnection().close();
-        } catch (Exception e) {
-            System.out.println("Error: " + e);
-        }
-    }
-
-    private Number getNextPatientID() {
-        try {
-            conn c = new conn();
-            Statement stmt = c.getConnection().createStatement();
-            ResultSet rs = stmt.executeQuery("SELECT COUNT(*) FROM patient_info");
-            rs.next();
-            int count = rs.getInt(1);
-            rs.close();
-            stmt.close();
-            c.getConnection().close();
-            return count + 1;
-        } catch (Exception e) {
-            System.out.println("Error: " + e);
-            return 1;
-        }
-    }
-
-    private String now() {
-        return LocalDateTime.now().format(DT_FMT);
-    }
-
-    public void handleSubmit(ActionEvent e) {
-        if (e.getSource() == buttonSubmit) {
-            try {
-                labelDate.setText(now());
-                System.out.println("Now date: " + labelDate.getText());
-            } catch (Exception ex) {
-                System.out.println("Error: " + ex);
-            }
-        }
-    }
-
-    private JTextField addLabelAndField(JPanel panel, String labelText, int y) {
-        JLabel label = new JLabel(labelText);
-        label.setBounds(20, y, 120, 25);
-        panel.add(label);
-
-        JTextField textField = new JTextField();
-        textField.setBounds(150, y, 280, 25);
-        panel.add(textField);
-        return textField;
-    }
-
-    private void addLabelAndComponent(JPanel panel, String labelText, JComponent component, int y) {
-        JLabel label = new JLabel(labelText);
-        label.setBounds(20, y, 120, 25);
-        panel.add(label);
-
-        component.setBounds(150, y, 280, 25);
-        panel.add(component);
-    }
-
-    @Override
-    public void actionPerformed(ActionEvent e) {
-        if (e.getSource() == buttonSubmit) {
-            try {
-                // Create connection
-                conn c = new conn();
-                Statement stmt = c.getConnection().createStatement();
-
-                // Get all field values
-                String name = textName.getText();
-                String gender = comboGender.getSelectedItem().toString();
-                String age = textAge.getText();
-                String contact = textContact.getText();
-                String citizenNo = textCitizen.getText();
-                String roomNo = comboRoom.getSelectedItem().toString();
-                String address = textAddress.getText();
-                String condition = textCondition.getText();
-                String deposit = textDeposit.getText();
-                String dateTime = labelDate.getText();
-
-                // Check if any required field is empty
-                if (name.equals("") || gender.equals("") || age.equals("") ||
-                        contact.equals("") || roomNo.equals("") || roomNo.equals("No Room Available") ||
-                        address.equals("") || condition.equals("") || deposit.equals("")) {
-                    JOptionPane.showMessageDialog(null, "Please fill all required fields!");
-                    stmt.close();
-                    c.getConnection().close();
-                    return;
-                }
-                if (contact.length() < 10) {
-                    JOptionPane.showMessageDialog(null, "Contact Number should be valid!");
-                    stmt.close();
-                    c.getConnection().close();
-                    return;
-                }
-
-                // Check if room is available
-                ResultSet rs = stmt.executeQuery("SELECT availability FROM room WHERE room_no = '" + roomNo + "'");
-                if (rs.next()) {
-                    String availability = rs.getString("availability");
-                    if (!availability.equals("Available")) {
-                        JOptionPane.showMessageDialog(null, "Selected room is not available!");
-                        rs.close();
-                        stmt.close();
-                        c.getConnection().close();
-                        return;
-                    }
-                } else {
-                    JOptionPane.showMessageDialog(null, "Room not found!");
-                    rs.close();
-                    stmt.close();
-                    c.getConnection().close();
-                    return;
-                }
-                rs.close();
-
-                // Create SQL query for patient_info
-                String query = "INSERT INTO patient_info (name, gender, age, contact, citizen_no, room_no, address, disease_condition, deposit, time_date) VALUES ('" +
-                        name + "', '" + gender + "', '" + age + "', '" +
-                        contact + "', '" + citizenNo + "', '" + roomNo + "', '" +
-                        address + "', '" + condition + "', '" + deposit + "', '" +
-                        dateTime + "')";
-
-                // Execute patient insertion
-                stmt.executeUpdate(query);
-
-                // Update room availability to Occupied
-                String updateRoomQuery = "UPDATE room SET availability = 'Occupied' WHERE room_no = '" + roomNo + "'";
-                stmt.executeUpdate(updateRoomQuery);
-
-                JOptionPane.showMessageDialog(null, "Patient Added Successfully!");
-
-                // Clear all fields
-                textName.setText("");
-                comboGender.setSelectedIndex(0);
-                textAge.setText("");
-                textContact.setText("");
-                textCitizen.setText("");
-                comboRoom.setSelectedIndex(0);
-                textAddress.setText("");
-                textCondition.setText("");
-                textDeposit.setText("");
-                labelDate.setText(now());
-
-                // Update patient ID
-                PatientID = getNextPatientID();
-                PatientRandomID.setText("Patient ID : " + PatientID);
-
-                // Update room combo
-                populateRoomCombo();
-
-                // Close statement and connection
-                stmt.close();
-                c.getConnection().close();
-
-            } catch (Exception ex) {
-                ex.printStackTrace();
-                JOptionPane.showMessageDialog(null, "Error: " + ex.getMessage());
-            }
-        }
+    private void clear(){
+        tName.setText(""); tAge.setText(""); tContact.setText("");
+        tCitizen.setText(""); tAddress.setText(""); tCondition.setText(""); tDeposit.setText("");
+        cGender.setSelectedIndex(0); dateLbl.setText(now());
     }
 }

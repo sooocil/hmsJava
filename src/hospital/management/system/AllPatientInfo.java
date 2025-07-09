@@ -63,6 +63,15 @@ public class AllPatientInfo extends JPanel {
         updateBtn.addActionListener(e -> openUpdatePanel());
         card.add(updateBtn);
 
+        JButton addBtn = new JButton("Add");
+        addBtn.setBounds(580, 60, 110, 35);
+        addBtn.setBackground(new Color(34, 197, 94));
+        addBtn.setForeground(Color.WHITE);
+        addBtn.setFocusPainted(false);
+        addBtn.addActionListener(e -> openAddPanel());
+        card.add(addBtn);
+
+
         table = createPatientTable("");
         scrollPane = new JScrollPane(table);
         scrollPane.setBounds(20, 110, width - 40, height - 130);
@@ -131,6 +140,9 @@ public class AllPatientInfo extends JPanel {
         dialog.pack();
         dialog.setLocationRelativeTo(this);
         dialog.setVisible(true);
+        dialog.setResizable(false);
+        updateTable(searchField.getText().trim());
+
     }
 
     private void openUpdatePanel() {
@@ -138,6 +150,21 @@ public class AllPatientInfo extends JPanel {
         dialog.setContentPane(new UpdatePatientDetails());
         dialog.pack();
         dialog.setLocationRelativeTo(this);
+        dialog.setResizable(false);
         dialog.setVisible(true);
+        updateTable(searchField.getText().trim());
     }
+
+    private void openAddPanel() {
+        JDialog dialog = new JDialog((JFrame) SwingUtilities.getWindowAncestor(this), "Add New Patient", true);
+        dialog.setContentPane(new AddNewPatient());
+        dialog.pack();
+        dialog.setLocationRelativeTo(this);
+        dialog.setResizable(false);
+        dialog.setVisible(true);
+        // Refresh table after adding
+        updateTable(searchField.getText().trim());
+    }
+
+
 }

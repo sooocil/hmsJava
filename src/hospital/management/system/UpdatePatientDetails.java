@@ -19,12 +19,14 @@ public class UpdatePatientDetails extends JPanel {
     private JButton buttonUpdate, buttonRefreshDate;
 
     public UpdatePatientDetails() {
+
+        setPreferredSize(new Dimension(620, 640));
+        setBounds(0,0,700,750);
         setLayout(null);
         setBackground(new Color(247, 247, 250));
 
-        // Card layout with fixed size
         JPanel card = new JPanel(null);
-        card.setBounds(0, 0, 620, 640);
+        card.setBounds(0, 0, 590, 640);
         card.setBackground(Color.WHITE);
         card.setBorder(new CompoundBorder(
                 BorderFactory.createLineBorder(new Color(229, 231, 235), 1),
@@ -56,7 +58,6 @@ public class UpdatePatientDetails extends JPanel {
         textCondition = addLabelAndField(card, "Disease/Condition:", y); y += 40;
         textDeposit   = addLabelAndField(card, "Deposit:", y);           y += 40;
 
-        // Date label and refresh button
         JLabel lblDate = new JLabel("Date & Time:");
         lblDate.setBounds(20, y, 120, 25);
         card.add(lblDate);
@@ -71,7 +72,6 @@ public class UpdatePatientDetails extends JPanel {
         buttonRefreshDate.addActionListener(e -> labelDate.setText(now()));
         card.add(buttonRefreshDate);
 
-        // Update button
         y += 50;
         buttonUpdate = new JButton("Update");
         buttonUpdate.setBounds(230, y, 140, 40);
@@ -82,7 +82,6 @@ public class UpdatePatientDetails extends JPanel {
         buttonUpdate.addActionListener(e -> updatePatient());
         card.add(buttonUpdate);
 
-        // Pre-fill first patient if available
         if (comboPatientId.getItemCount() > 0) {
             loadPatientData();
         }
@@ -178,9 +177,8 @@ public class UpdatePatientDetails extends JPanel {
         comp.setBounds(150, y, 300, 25); p.add(comp);
     }
 
-    /** Call this from another class to open as a modal window */
     public static void showDialog(Component parent) {
-        JDialog dialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(parent), "Update Patient", true);
+        JDialog dialog = new JDialog((Dialog) SwingUtilities.getWindowAncestor(parent), "Update Patient", true);
         dialog.setContentPane(new UpdatePatientDetails());
         dialog.setSize(620, 640);
         dialog.setResizable(false);

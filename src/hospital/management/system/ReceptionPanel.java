@@ -12,7 +12,7 @@ public class ReceptionPanel extends JFrame {
 
     public ReceptionPanel() {
         setLayout(new BorderLayout());
-
+        setPreferredSize(new Dimension(1500, 750));
         JPanel leftPanel = new JPanel();
         leftPanel.setPreferredSize(new Dimension(420, 200));
         leftPanel.setBackground(new Color(23, 37, 84));
@@ -35,14 +35,9 @@ public class ReceptionPanel extends JFrame {
         // Button names
         String[] buttonNames = {
                 "Dashboard",
-                "Add New Patient",
                 "All Patient Info",
-                "Discharge Patient",
                 "View Room",
-                "Add Room",
-                "Department",
                 "Employee Info",
-                "Update Patient Details",
                 "Ambulance Info"
         };
 
@@ -109,20 +104,17 @@ public class ReceptionPanel extends JFrame {
                         break;
 
                     case "View Room":
-                        newPanel = createPlaceholderPanel("Room Status Placeholder");
+                        newPanel = new ViewRoom();
                         break;
                     case "Add Room":
                         newPanel = new AddRoomPanel();
                         break;
-                    case "Department":
-                        newPanel = new DepartmentPanel();
-                        break;
                     case "Employee Info":
-                        newPanel = createPlaceholderPanel("Employee Table Placeholder");
+                        newPanel = new EmployeeInfo();
                         break;
 
                     case "Ambulance Info":
-                        newPanel = createPlaceholderPanel("Ambulance Status Placeholder");
+                        newPanel = createPlaceholderPanel("Ambulance Information Coming Soon ....");
                         break;
                     default:
                         newPanel = createPlaceholderPanel("Welcome to " + name);
@@ -176,6 +168,7 @@ public class ReceptionPanel extends JFrame {
         mainPanel.revalidate();
         mainPanel.repaint();
 
+        pack();
         setTitle("Hospital Management System - Reception Panel");
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         setResizable(true);

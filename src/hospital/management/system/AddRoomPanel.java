@@ -81,53 +81,41 @@ public class AddRoomPanel extends JPanel implements ActionListener {
     @Override
     public void actionPerformed(ActionEvent e) {
         if (e.getSource() == addButton) {
-            try {
-                // Create connection
-                conn c = new conn();
+            String roomNo   = numberField.getText().trim();
+            String roomType = typeBox.getSelectedItem().toString();
+            String priceStr = priceField.getText().trim();
 
-                // Get field values
-                String roomNo = numberField.getText();
-                String roomType = typeBox.getSelectedItem().toString();
-                String price = priceField.getText();
-                String availability = "Available";
+            if (roomNo.isEmpty() || roomType.isEmpty() || priceStr.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Please fill all fields!");
+                return;
+            }
+            double price;
+            try { price = Double.parseDouble(priceStr); }
+            catch (NumberFormatException ex) {
+                JOptionPane.showMessageDialog(this, "Price must be a number!");
+                return;
+            }
 
-                // Check if fields are empty
-                if (roomNo.equals("") || roomType.equals("") || price.equals("")) {
-                    JOptionPane.showMessageDialog(null, "Please fill all fields!");
-                    return;
-                }
+            try (conn c = new conn();
+                 PreparedStatement ps = c.getConnection().prepareStatement(
+                         "INSERT INTO room (room_no, availability, price, room_type) VALUES (?, ?, ?, ?)")) {
 
-                // Check if price is a number
-                try {
-                    Double.parseDouble(price);
-                } catch (NumberFormatException ex) {
-                    JOptionPane.showMessageDialog(null, "Price must be a number!");
-                    return;
-                }
+                ps.setString (1, roomNo);
+                ps.setBoolean(2, true);
+                ps.setDouble (3, price);
+                ps.setString (4, roomType);
 
-                // Create SQL query
-                String query = "INSERT INTO room (room_no, availability, price, room_type) VALUES ('" +
-                        roomNo + "', '" + availability + "', '" + price + "', '" + roomType + "')";
+                ps.executeUpdate();
+                JOptionPane.showMessageDialog(this, "Room added successfully!");
 
-                // Execute query
-                Statement stmt = c.getConnection().createStatement();
-                stmt.executeUpdate(query);
-
-                JOptionPane.showMessageDialog(null, "Room Added Successfully!");
-
-                // Clear fields
                 numberField.setText("");
-                typeBox.setSelectedIndex(0);
                 priceField.setText("");
-
-                // Close statement and connection
-                stmt.close();
-                c.getConnection().close();
+                typeBox.setSelectedIndex(0);
 
             } catch (Exception ex) {
-                System.out.println("Error: " + ex);
-                JOptionPane.showMessageDialog(null, "Error: " + ex.getMessage());
+                JOptionPane.showMessageDialog(this, "DB Error: " + ex.getMessage());
             }
         }
     }
+
 }
